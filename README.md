@@ -82,6 +82,63 @@ pip install mlx-omni-server
 
 🎉 **That's it!** You're now running AI locally on your Mac.
 
+## 🧰 Cluster Mode (replicas)
+
+Run multiple backend replicas behind a lightweight proxy for higher concurrency on a single machine.
+
+```bash
+# Using python -m (works everywhere)
+python -m mlx_omni_server.cluster \
+  --replicas 3 \
+  --base-port 20240 \
+  --port 10240 \
+  --backend-host 127.0.0.1 \
+  --log-level info \
+  --cors-allow-origins="*"
+
+# Or via the installed CLI alias
+mlx-omni-cluster \
+  --replicas 3 \
+  --base-port 20240 \
+  --port 10240 \
+  --backend-host 127.0.0.1 \
+  --log-level info \
+  --cors-allow-origins="*"
+```
+
+**How it works**
+- A front-door proxy listens on `--port` (e.g. `10240`) and forwards requests in round‑robin to backend replicas.
+- The launcher starts `--replicas` backend servers, each running the standard `mlx-omni-server` on its own port.
+- Backend ports are allocated as `--base-port + i` for the i‑th replica (e.g. 20240, 20241, 20242 for 3 replicas).
+- If a replica fails for a request, the proxy retries against the remaining replicas once before returning 502.
+
+**Client configuration (unchanged)**
+- Keep using the same base URL you already use for single‑instance:
+  - OpenAI: `http://localhost:10240/v1`
+  - Anthropic: `http://localhost:10240/anthropic`
+- The proxy handles load balancing; your client code does not need to change.
+
+**Flags**
+- `--replicas`: number of backend processes to launch (default: 2)
+- `--base-port`: starting port for backends; i‑th uses `base-port + i` (default: 20240)
+- `--port`: proxy listening port for clients (default: 10240)
+- `--backend-host`: host/interface for backends (default: 127.0.0.1)
+- `--workers`: uvicorn workers per backend replica (default: 1)
+- `--log-level`: logging level for proxy and replicas (default: info)
+- `--cors-allow-origins`: CSV of allowed origins or `"*"` to allow all (useful for browser access during local dev)
+
+**Health check**
+```bash
+curl http://localhost:10240/health
+# {"status": "ok", "backends": ["http://127.0.0.1:20240", "http://127.0.0.1:20241", ...]}
+```
+
+**Tips**
+- Each replica loads the model into memory. Choose `--replicas` to match your available RAM/VRAM and workload.
+- Start with `--workers 1` per replica; increase only if your workload benefits and memory allows.
+- For local development from a browser, set `--cors-allow-origins="*"`. For production, restrict origins.
+- Stop with Ctrl+C; the proxy will terminate child replica processes cleanly.
+
 ## 📋 API Support
 
 ### OpenAI Compatible Endpoints (`/v1/*`)

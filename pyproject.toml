@@ -44,6 +44,8 @@ dependencies = [
     "mflux>=0.11.0,<0.12",
     # embeddings
     "mlx-embeddings>=0.0.3",
+    # proxy
+    "httpx>=0.27.2,<0.28",
 ]
 
 [project.urls]
@@ -51,6 +53,7 @@ Repository = "https://github.com/madroidmaq/mlx-omni-server"
 
 [project.scripts]
 mlx-omni-server = "mlx_omni_server.main:start"
+mlx-omni-cluster = "mlx_omni_server.cluster:start"
 
 [dependency-groups]
 dev = [

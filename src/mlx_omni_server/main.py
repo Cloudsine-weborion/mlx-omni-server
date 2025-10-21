@@ -8,6 +8,7 @@ from .middleware.logging import RequestResponseLoggingMiddleware
 from .routers import api_router
 from .utils.logger import logger, set_logger_level
 
+# ---> CLI entry `mlx-omni-server` > [app] > uvicorn serves API routes
 app = FastAPI(title="MLX Omni Server")
 
 # Add request/response logging middleware with custom levels
@@ -21,6 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app.include_router(api_router)
 
 
+# ---> start() > [build_parser] > argparse parses CLI flags for uvicorn.run
 def build_parser():
     """Create and configure the argument parser for the server."""
     parser = argparse.ArgumentParser(description="MLX Omni Server")
@@ -59,6 +61,7 @@ def build_parser():
     return parser
 
 
+# ---> module import & start() > [configure_cors_middleware] > app.add_middleware(CORSMiddleware)
 def configure_cors_middleware(cors_allow_origins: str | None):
     """Configure CORS middleware with the provided origins, if any."""
     # Remove existing CORS middleware
@@ -84,9 +87,11 @@ def configure_cors_middleware(cors_allow_origins: str | None):
     )
 
 
+# ---> module import > [configure_cors_middleware(...)] > app with initial CORS
 configure_cors_middleware(os.environ.get("MLX_OMNI_CORS", None))
 
 
+# ---> CLI entry `mlx-omni-server` > [start] > uvicorn.run("mlx_omni_server.main:app", ...)
 def start():
     """Start the MLX Omni Server."""
 
