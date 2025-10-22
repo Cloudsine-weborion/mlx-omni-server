@@ -3,20 +3,23 @@
 # Run MLX Omni Server benchmarks with different parameters
 # Modify the --rounds and --concurrency values as needed
 
-echo "Running benchmark with rounds=5, concurrency=4"
-python examples/benchmark_chat.py --rounds 5 --concurrency 4 --model mlx-community/gemma-3-12b-it-4bit
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_DIR="$SCRIPT_DIR"
 
-echo ""
-echo "Running benchmark with rounds=3, concurrency=2"
-python examples/benchmark_chat.py --rounds 3 --concurrency 2 --model mlx-community/gemma-3-12b-it-4bit
+# Prefer repo venv python if available
+PY_BIN="$REPO_DIR/venv/bin/python"
+if [ ! -x "$PY_BIN" ]; then
+  PY_BIN="python"
+fi
 
-echo ""
-echo "Running benchmark with rounds=10, concurrency=1"
-python examples/benchmark_chat.py --rounds 10 --concurrency 1 --model mlx-community/gemma-3-12b-it-4bit
+BENCH_PY="$REPO_DIR/examples/benchmark_chat.py"
+OUT="$REPO_DIR/examples/results10.txt"
+: > "$OUT"
 
-echo ""
-echo "Running benchmark with rounds=1, concurrency=8"
-python examples/benchmark_chat.py --rounds 1 --concurrency 8 --model mlx-community/gemma-3-12b-it-4bit
+for c in $(seq 1 10); do
+  echo "==== Concurrency $c ====\n" >> "$OUT"
+  STREAMING=true "$PY_BIN" "$BENCH_PY" --rounds 3 --vary-prompt --concurrency "$c" >> "$OUT" 2>&1
+  echo "" >> "$OUT"
+done
 
-# Add more benchmark runs below as needed
-# python examples/benchmark_chat.py --rounds X --concurrency Y --model mlx-community/gemma-3-12b-it-4bit
+echo "All runs complete. Results written to $OUT"

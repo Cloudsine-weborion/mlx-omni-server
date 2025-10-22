@@ -2,13 +2,13 @@ from openai import OpenAI
 
 # Configure client to use local server
 client = OpenAI(
-    # base_url="http://localhost:11434/v1",  # Point to ollama server
-    base_url="http://localhost:10240/v1",  # Point to mlx omni server
+    base_url="http://127.0.0.1:20240/v1",  # Point to ollama server
+    # base_url="http://localhost:10240/v1",  # Point to mlx omni server
     api_key="not-needed",  # API key is not required for local server
 )
 
 
-def chat(model: str = "mlx-community/Llama-3.2-3B-Instruct-4bit"):
+def chat(model: str = "mlx-community/gemma-3-12b-it-4bit"):
     tools = [
         {
             "type": "function",
@@ -38,7 +38,7 @@ def chat(model: str = "mlx-community/Llama-3.2-3B-Instruct-4bit"):
 
 
 if __name__ == "__main__":
-    completion = chat(model="mlx-community/Llama-3.2-3B-Instruct-4bit")
+    completion = chat(model="mlx-community/gemma-3-12b-it-4bit")
     message = completion.choices[0].message
     print(f"message: {message}")
     if message.tool_calls:

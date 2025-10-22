@@ -103,7 +103,7 @@ class OpenAIAdapter:
             "sampler": sampler_config,
             "top_logprobs": request.top_logprobs if request.logprobs else None,
             "template_kwargs": template_kwargs,
-            "enable_prompt_cache": True,
+            "enable_prompt_cache": False,
             "repetition_penalty": request.presence_penalty,
             "json_schema": json_schema,
         }
@@ -214,19 +214,21 @@ class OpenAIAdapter:
                         ChatCompletionChunkChoice(
                             index=0,
                             delta=message,
-                            finish_reason=chunk.finish_reason or "stop",
+                            finish_reason=chunk.finish_reason,
                             logprobs=chunk.logprobs,
                         )
                     ],
                 )
                 result = chunk
 
-            if (
-                request.stream_options
-                and request.stream_options.include_usage
-                and result is not None
-            ):
-                created = int(time.time())
+            # Emit a final stop chunk; include usage if requested
+            created = int(time.time())
+            include_usage = bool(
+                request.stream_options and request.stream_options.include_usage and result is not None
+            )
+
+            final_kwargs = {}
+            if include_usage:
                 cached_tokens = result.stats.cache_hit_tokens
                 logger.debug(f"Stream response with {cached_tokens} cached tokens")
 
@@ -238,27 +240,29 @@ class OpenAIAdapter:
                         cached_tokens=cached_tokens
                     )
 
-                yield ChatCompletionChunk(
-                    id=chat_id,
-                    created=created,
-                    model=request.model,
-                    choices=[
-                        ChatCompletionChunkChoice(
-                            index=0,
-                            delta=ChatMessage(role=Role.ASSISTANT),
-                            finish_reason="stop",
-                            logprobs=None,
-                        )
-                    ],
-                    usage=ChatCompletionUsage(
-                        prompt_tokens=result.stats.prompt_tokens + cached_tokens,
-                        completion_tokens=result.stats.completion_tokens,
-                        total_tokens=result.stats.prompt_tokens
-                        + result.stats.completion_tokens
-                        + cached_tokens,
-                        prompt_tokens_details=prompt_tokens_details,
-                    ),
+                final_kwargs["usage"] = ChatCompletionUsage(
+                    prompt_tokens=result.stats.prompt_tokens + cached_tokens,
+                    completion_tokens=result.stats.completion_tokens,
+                    total_tokens=result.stats.prompt_tokens
+                    + result.stats.completion_tokens
+                    + cached_tokens,
+                    prompt_tokens_details=prompt_tokens_details,
                 )
+
+            yield ChatCompletionChunk(
+                id=chat_id,
+                created=created,
+                model=request.model,
+                choices=[
+                    ChatCompletionChunkChoice(
+                        index=0,
+                        delta=ChatMessage(role=Role.ASSISTANT),
+                        finish_reason="stop",
+                        logprobs=None,
+                    )
+                ],
+                **final_kwargs,
+            )
 
         except Exception as e:
             logger.error(f"Error during stream generation: {str(e)}", exc_info=True)

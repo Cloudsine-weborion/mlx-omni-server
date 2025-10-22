@@ -1,0 +1,402 @@
+==== Concurrency 1 ====\n
+INFO:__main__:Starting chat request 0
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 0 completed (streaming)
+INFO:__main__:Starting chat request 0
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 0 completed (streaming)
+INFO:__main__:Starting chat request 0
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 0 completed (streaming)
+Benchmarking model='mlx-community/gemma-3-12b-it-4bit' at base_url='http://localhost:10240/v1'
+Rounds=3, Requests/Round=1, Concurrency=1
+Mode: Streaming (TTFB measured)
+Memory sampling targets processes listening on port 10240 (or PID=None if provided)
+
+Round 1/3:
+  Latency avg=4.9284s p50=4.9284s p95=4.9284s p99=4.9284s min=4.9284s max=4.9284s
+  TTFB avg=4.1536s p50=4.1536s p95=4.1536s p99=4.1536s min=4.1536s max=4.1536s
+  Errors=0  Round wall=4.929s  Throughput=0.2 req/s
+  Tokens: completion=35  Gen throughput=7.1 tok/s
+  Server RSS after round: 59.47 MB  (PIDs: 74638)
+
+Round 2/3:
+  Latency avg=3.5314s p50=3.5314s p95=3.5314s p99=3.5314s min=3.5314s max=3.5314s
+  TTFB avg=2.7553s p50=2.7553s p95=2.7553s p99=2.7553s min=2.7553s max=2.7553s
+  Errors=0  Round wall=3.532s  Throughput=0.28 req/s
+  Tokens: completion=35  Gen throughput=9.91 tok/s
+  Server RSS after round: 59.53 MB  (PIDs: 74638)
+
+Round 3/3:
+  Latency avg=3.7059s p50=3.7059s p95=3.7059s p99=3.7059s min=3.7059s max=3.7059s
+  TTFB avg=2.9291s p50=2.9291s p95=2.9291s p99=2.9291s min=2.9291s max=2.9291s
+  Errors=0  Round wall=3.706s  Throughput=0.27 req/s
+  Tokens: completion=35  Gen throughput=9.44 tok/s
+  Server RSS after round: 59.56 MB  (PIDs: 74638)
+
+Overall:
+  Latency avg=4.0552s p50=3.7059s p95=4.9284s p99=4.9284s min=3.5314s max=4.9284s
+  TTFB avg=3.2793s p50=2.9291s p95=4.1536s p99=4.1536s min=2.7553s max=4.1536s
+  Errors=0  Total wall=12.167s  Throughput=0.25 req/s
+  Tokens: completion=105  Gen throughput=8.63 tok/s
+
+==== Concurrency 2 ====\n
+INFO:__main__:Starting chat request 0
+INFO:__main__:Starting chat request 1
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 0 completed (streaming)
+INFO:__main__:Chat request 1 completed (streaming)
+INFO:__main__:Starting chat request 0
+INFO:__main__:Starting chat request 1
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 0 completed (streaming)
+INFO:__main__:Chat request 1 completed (streaming)
+INFO:__main__:Starting chat request 0
+INFO:__main__:Starting chat request 1
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 0 completed (streaming)
+INFO:__main__:Chat request 1 completed (streaming)
+Benchmarking model='mlx-community/gemma-3-12b-it-4bit' at base_url='http://localhost:10240/v1'
+Rounds=3, Requests/Round=2, Concurrency=2
+Mode: Streaming (TTFB measured)
+Memory sampling targets processes listening on port 10240 (or PID=None if provided)
+
+Round 1/3:
+  Latency avg=4.3018s p50=4.2947s p95=4.3089s p99=4.3089s min=4.2947s max=4.3089s
+  TTFB avg=2.9448s p50=2.9581s p95=2.9316s p99=2.9316s min=2.9316s max=2.9581s
+  Errors=0  Round wall=4.309s  Throughput=0.46 req/s
+  Tokens: completion=70  Gen throughput=16.24 tok/s
+  Server RSS after round: 59.94 MB  (PIDs: 74638)
+
+Round 2/3:
+  Latency avg=5.2883s p50=5.2757s p95=5.301s p99=5.301s min=5.2757s max=5.301s
+  TTFB avg=3.9425s p50=3.9494s p95=3.9355s p99=3.9355s min=3.9355s max=3.9494s
+  Errors=0  Round wall=5.302s  Throughput=0.38 req/s
+  Tokens: completion=70  Gen throughput=13.2 tok/s
+  Server RSS after round: 59.98 MB  (PIDs: 74638)
+
+Round 3/3:
+  Latency avg=4.5722s p50=4.5182s p95=4.6261s p99=4.6261s min=4.5182s max=4.6261s
+  TTFB avg=3.2644s p50=3.203s p95=3.3258s p99=3.3258s min=3.203s max=3.3258s
+  Errors=0  Round wall=4.627s  Throughput=0.43 req/s
+  Tokens: completion=70  Gen throughput=15.13 tok/s
+  Server RSS after round: 60.11 MB  (PIDs: 74638)
+
+Overall:
+  Latency avg=4.7208s p50=4.5182s p95=5.301s p99=5.301s min=4.2947s max=5.301s
+  TTFB avg=3.3839s p50=3.203s p95=3.9494s p99=3.9494s min=2.9316s max=3.9494s
+  Errors=0  Total wall=14.238s  Throughput=0.42 req/s
+  Tokens: completion=210  Gen throughput=14.75 tok/s
+
+==== Concurrency 3 ====\n
+INFO:__main__:Starting chat request 0
+INFO:__main__:Starting chat request 1
+INFO:__main__:Starting chat request 2
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 0 completed (streaming)
+INFO:__main__:Chat request 1 completed (streaming)
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 2 completed (streaming)
+INFO:__main__:Starting chat request 0
+INFO:__main__:Starting chat request 1
+INFO:__main__:Starting chat request 2
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 0 completed (streaming)
+INFO:__main__:Chat request 1 completed (streaming)
+INFO:__main__:Chat request 2 completed (streaming)
+INFO:__main__:Starting chat request 0
+INFO:__main__:Starting chat request 1
+INFO:__main__:Starting chat request 2
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 1 completed (streaming)
+INFO:__main__:Chat request 0 completed (streaming)
+INFO:__main__:Chat request 2 completed (streaming)
+Benchmarking model='mlx-community/gemma-3-12b-it-4bit' at base_url='http://localhost:10240/v1'
+Rounds=3, Requests/Round=3, Concurrency=3
+Mode: Streaming (TTFB measured)
+Memory sampling targets processes listening on port 10240 (or PID=None if provided)
+
+Round 1/3:
+  Latency avg=2.6022s p50=1.7099s p95=4.4231s p99=4.4231s min=1.6737s max=4.4231s
+  TTFB avg=1.4413s p50=0.3735s p95=3.6303s p99=3.6303s min=0.3202s max=3.6303s
+  Errors=0  Round wall=4.424s  Throughput=0.68 req/s
+  Tokens: completion=101  Gen throughput=22.83 tok/s
+  Server RSS after round: 60.2 MB  (PIDs: 74638)
+
+Round 2/3:
+  Latency avg=2.3824s p50=2.3848s p95=2.4401s p99=2.4401s min=2.3222s max=2.4401s
+  TTFB avg=0.3855s p50=0.4208s p95=0.4041s p99=0.4041s min=0.3316s max=0.4208s
+  Errors=0  Round wall=2.441s  Throughput=1.23 req/s
+  Tokens: completion=100  Gen throughput=40.96 tok/s
+  Server RSS after round: 60.23 MB  (PIDs: 74638)
+
+Round 3/3:
+  Latency avg=2.2716s p50=2.2079s p95=2.4214s p99=2.4214s min=2.1854s max=2.4214s
+  TTFB avg=0.3655s p50=0.2709s p95=0.5531s p99=0.5531s min=0.2709s max=0.5531s
+  Errors=0  Round wall=2.423s  Throughput=1.24 req/s
+  Tokens: completion=101  Gen throughput=41.69 tok/s
+  Server RSS after round: 60.28 MB  (PIDs: 74638)
+
+Overall:
+  Latency avg=2.4187s p50=2.2079s p95=4.4231s p99=4.4231s min=1.6737s max=4.4231s
+  TTFB avg=0.7308s p50=0.3316s p95=3.6303s p99=3.6303s min=0.2709s max=3.6303s
+  Errors=0  Total wall=9.288s  Throughput=0.97 req/s
+  Tokens: completion=302  Gen throughput=32.52 tok/s
+
+==== Concurrency 4 ====\n
+INFO:__main__:Starting chat request 0
+INFO:__main__:Starting chat request 1
+INFO:__main__:Starting chat request 2
+INFO:__main__:Starting chat request 3
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 3 completed (streaming)
+INFO:__main__:Chat request 1 completed (streaming)
+INFO:__main__:Chat request 0 completed (streaming)
+INFO:__main__:Chat request 2 completed (streaming)
+INFO:__main__:Starting chat request 0
+INFO:__main__:Starting chat request 1
+INFO:__main__:Starting chat request 2
+INFO:__main__:Starting chat request 3
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 0 completed (streaming)
+INFO:__main__:Chat request 1 completed (streaming)
+INFO:__main__:Chat request 2 completed (streaming)
+INFO:__main__:Chat request 3 completed (streaming)
+INFO:__main__:Starting chat request 0
+INFO:__main__:Starting chat request 1
+INFO:__main__:Starting chat request 2
+INFO:__main__:Starting chat request 3
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 3 completed (streaming)
+INFO:__main__:Chat request 1 completed (streaming)
+INFO:__main__:Chat request 0 completed (streaming)
+INFO:__main__:Chat request 2 completed (streaming)
+Benchmarking model='mlx-community/gemma-3-12b-it-4bit' at base_url='http://localhost:10240/v1'
+Rounds=3, Requests/Round=4, Concurrency=4
+Mode: Streaming (TTFB measured)
+Memory sampling targets processes listening on port 10240 (or PID=None if provided)
+
+Round 1/3:
+  Latency avg=3.5566s p50=3.5536s p95=3.8183s p99=3.8183s min=3.1474s max=3.8183s
+  TTFB avg=0.5907s p50=0.6215s p95=0.5699s p99=0.5699s min=0.5699s max=0.6215s
+  Errors=0  Round wall=3.819s  Throughput=1.05 req/s
+  Tokens: completion=147  Gen throughput=38.49 tok/s
+  Server RSS after round: 60.33 MB  (PIDs: 74638)
+
+Round 2/3:
+  Latency avg=2.8604s p50=2.8143s p95=3.2238s p99=3.2238s min=2.5729s max=3.2238s
+  TTFB avg=0.4327s p50=0.3455s p95=0.4924s p99=0.4924s min=0.342s max=0.5508s
+  Errors=0  Round wall=3.225s  Throughput=1.24 req/s
+  Tokens: completion=134  Gen throughput=41.54 tok/s
+  Server RSS after round: 60.38 MB  (PIDs: 74638)
+
+Round 3/3:
+  Latency avg=3.4177s p50=3.46s p95=3.5158s p99=3.5158s min=3.2226s max=3.5158s
+  TTFB avg=0.5433s p50=0.5339s p95=0.5477s p99=0.5477s min=0.5338s max=0.5578s
+  Errors=0  Round wall=3.517s  Throughput=1.14 req/s
+  Tokens: completion=146  Gen throughput=41.51 tok/s
+  Server RSS after round: 60.41 MB  (PIDs: 74638)
+
+Overall:
+  Latency avg=3.2782s p50=3.2238s p95=3.7073s p99=3.8183s min=2.5729s max=3.8183s
+  TTFB avg=0.5222s p50=0.5477s p95=0.6015s p99=0.6215s min=0.342s max=0.6215s
+  Errors=0  Total wall=10.561s  Throughput=1.14 req/s
+  Tokens: completion=427  Gen throughput=40.43 tok/s
+
+==== Concurrency 5 ====\n
+INFO:__main__:Starting chat request 0
+INFO:__main__:Starting chat request 1
+INFO:__main__:Starting chat request 2
+INFO:__main__:Starting chat request 3
+INFO:__main__:Starting chat request 4
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 1 completed (streaming)
+INFO:__main__:Chat request 4 completed (streaming)
+INFO:__main__:Chat request 2 completed (streaming)
+INFO:__main__:Chat request 0 completed (streaming)
+INFO:__main__:Chat request 3 completed (streaming)
+INFO:__main__:Starting chat request 0
+INFO:__main__:Starting chat request 1
+INFO:__main__:Starting chat request 2
+INFO:__main__:Starting chat request 3
+INFO:__main__:Starting chat request 4
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 1 completed (streaming)
+INFO:__main__:Chat request 2 completed (streaming)
+INFO:__main__:Chat request 4 completed (streaming)
+INFO:__main__:Chat request 0 completed (streaming)
+INFO:__main__:Chat request 3 completed (streaming)
+INFO:__main__:Starting chat request 0
+INFO:__main__:Starting chat request 1
+INFO:__main__:Starting chat request 2
+INFO:__main__:Starting chat request 3
+INFO:__main__:Starting chat request 4
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 2 completed (streaming)
+INFO:__main__:Chat request 4 completed (streaming)
+INFO:__main__:Chat request 1 completed (streaming)
+INFO:__main__:Chat request 0 completed (streaming)
+INFO:__main__:Chat request 3 completed (streaming)
+Benchmarking model='mlx-community/gemma-3-12b-it-4bit' at base_url='http://localhost:10240/v1'
+Rounds=3, Requests/Round=5, Concurrency=5
+Mode: Streaming (TTFB measured)
+Memory sampling targets processes listening on port 10240 (or PID=None if provided)
+
+Round 1/3:
+  Latency avg=4.1054s p50=4.0261s p95=4.4463s p99=4.4463s min=3.7851s max=4.4463s
+  TTFB avg=0.6282s p50=0.667s p95=0.4899s p99=0.4899s min=0.4899s max=0.667s
+  Errors=0  Round wall=4.447s  Throughput=1.12 req/s
+  Tokens: completion=184  Gen throughput=41.38 tok/s
+  Server RSS after round: 60.44 MB  (PIDs: 74638)
+
+Round 2/3:
+  Latency avg=4.2062s p50=4.1537s p95=4.2918s p99=4.2918s min=4.142s max=4.2918s
+  TTFB avg=0.6s p50=0.4725s p95=0.6218s p99=0.6218s min=0.4725s max=0.6469s
+  Errors=0  Round wall=4.294s  Throughput=1.16 req/s
+  Tokens: completion=179  Gen throughput=41.69 tok/s
+  Server RSS after round: 60.47 MB  (PIDs: 74638)
+
+Round 3/3:
+  Latency avg=3.6412s p50=3.5847s p95=3.7846s p99=3.7846s min=3.3845s max=3.7846s
+  TTFB avg=0.5142s p50=0.6093s p95=0.5565s p99=0.5565s min=0.4105s max=0.6093s
+  Errors=0  Round wall=3.786s  Throughput=1.32 req/s
+  Tokens: completion=154  Gen throughput=40.67 tok/s
+  Server RSS after round: 60.48 MB  (PIDs: 74638)
+
+Overall:
+  Latency avg=3.9843s p50=4.0335s p95=4.2918s p99=4.4463s min=3.3845s max=4.4463s
+  TTFB avg=0.5808s p50=0.6186s p95=0.6645s p99=0.667s min=0.4105s max=0.667s
+  Errors=0  Total wall=12.527s  Throughput=1.2 req/s
+  Tokens: completion=517  Gen throughput=41.27 tok/s
+
+==== Concurrency 6 ====\n
+INFO:__main__:Starting chat request 0
+INFO:__main__:Starting chat request 1
+INFO:__main__:Starting chat request 2
+INFO:__main__:Starting chat request 3
+INFO:__main__:Starting chat request 4
+INFO:__main__:Starting chat request 5
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 1 completed (streaming)
+INFO:__main__:Chat request 3 completed (streaming)
+INFO:__main__:Chat request 4 completed (streaming)
+INFO:__main__:Chat request 5 completed (streaming)
+INFO:__main__:Chat request 0 completed (streaming)
+INFO:__main__:Chat request 2 completed (streaming)
+INFO:__main__:Starting chat request 0
+INFO:__main__:Starting chat request 1
+INFO:__main__:Starting chat request 2
+INFO:__main__:Starting chat request 3
+INFO:__main__:Starting chat request 4
+INFO:__main__:Starting chat request 5
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 2 completed (streaming)
+INFO:__main__:Chat request 1 completed (streaming)
+INFO:__main__:Chat request 0 completed (streaming)
+INFO:__main__:Chat request 4 completed (streaming)
+INFO:__main__:Chat request 5 completed (streaming)
+INFO:__main__:Chat request 3 completed (streaming)
+INFO:__main__:Starting chat request 0
+INFO:__main__:Starting chat request 1
+INFO:__main__:Starting chat request 2
+INFO:__main__:Starting chat request 3
+INFO:__main__:Starting chat request 4
+INFO:__main__:Starting chat request 5
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:__main__:Chat request 2 completed (streaming)
+INFO:__main__:Chat request 3 completed (streaming)
+INFO:__main__:Chat request 1 completed (streaming)
+INFO:__main__:Chat request 5 completed (streaming)
+INFO:__main__:Chat request 4 completed (streaming)
+INFO:__main__:Chat request 0 completed (streaming)
+Benchmarking model='mlx-community/gemma-3-12b-it-4bit' at base_url='http://localhost:10240/v1'
+Rounds=3, Requests/Round=6, Concurrency=6
+Mode: Streaming (TTFB measured)
+Memory sampling targets processes listening on port 10240 (or PID=None if provided)
+
+Round 1/3:
+  Latency avg=5.6821s p50=5.217s p95=6.4376s p99=6.4376s min=5.1523s max=6.4376s
+  TTFB avg=0.6793s p50=0.7091s p95=0.726s p99=0.726s min=0.3582s max=0.7724s
+  Errors=0  Round wall=6.438s  Throughput=0.93 req/s
+  Tokens: completion=275  Gen throughput=42.71 tok/s
+  Server RSS after round: 60.5 MB  (PIDs: 74638)
+
+Round 2/3:
+  Latency avg=5.3804s p50=4.9335s p95=6.5974s p99=6.5974s min=4.5721s max=6.5974s
+  TTFB avg=0.6242s p50=0.6911s p95=0.6953s p99=0.6953s min=0.2911s max=0.7096s
+  Errors=0  Round wall=6.599s  Throughput=0.91 req/s
+  Tokens: completion=284  Gen throughput=43.04 tok/s
+  Server RSS after round: 60.52 MB  (PIDs: 74638)
+
+Round 3/3:
+  Latency avg=5.8597s p50=5.4126s p95=6.7765s p99=6.7765s min=4.907s max=6.7765s
+  TTFB avg=0.577s p50=0.5013s p95=0.5138s p99=0.5138s min=0.4985s max=0.7476s
+  Errors=0  Round wall=6.777s  Throughput=0.89 req/s
+  Tokens: completion=304  Gen throughput=44.86 tok/s
+  Server RSS after round: 60.53 MB  (PIDs: 74638)
+
+Overall:
+  Latency avg=5.6407s p50=5.4126s p95=6.6626s p99=6.7765s min=4.5721s max=6.7765s
+  TTFB avg=0.6268s p50=0.6945s p95=0.7591s p99=0.7724s min=0.2911s max=0.7724s
+  Errors=0  Total wall=19.814s  Throughput=0.91 req/s
+  Tokens: completion=863  Gen throughput=43.55 tok/s
+
+==== Concurrency 7 ====\n
+INFO:__main__:Starting chat request 0
+INFO:__main__:Starting chat request 1
+INFO:__main__:Starting chat request 2
+INFO:__main__:Starting chat request 3
+INFO:__main__:Starting chat request 4
+INFO:__main__:Starting chat request 5
+INFO:__main__:Starting chat request 6
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST http://localhost:10240/v1/chat/completions "HTTP/1.1 200 OK"

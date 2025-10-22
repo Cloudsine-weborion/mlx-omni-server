@@ -1,0 +1,201 @@
+Running benchmark with rounds=5, concurrency=5
+Benchmarking model='mlx-community/gemma-3-12b-it-4bit' at base_url='http://localhost:10240/v1'
+Rounds=3, Requests/Round=5, Concurrency=5
+Memory sampling targets processes listening on port 10240 (or PID=None if provided)
+
+Round 1/3:
+Running benchmark with rounds=5, concurrency=5
+Benchmarking model='mlx-community/gemma-3-12b-it-4bit' at base_url='http://localhost:10240/v1'
+Rounds=3, Requests/Round=5, Concurrency=5
+Memory sampling targets processes listening on port 10240 (or PID=None if provided)
+
+Round 1/3:
+  Latency avg=16.3854s p50=15.8564s p95=17.536s p99=17.536s min=14.6451s max=17.536s
+  Errors=0  Round wall=17.537s  Throughput=0.29 req/s
+  Tokens: completion=970  Gen throughput=55.31 tok/s
+  Server RSS after round: 58.34 MB  (PIDs: 37361)
+
+Round 2/3:
+  Latency avg=15.0816s p50=13.8258s p95=16.7092s p99=16.7092s min=13.7078s max=16.7092s
+  Errors=0  Round wall=16.711s  Throughput=0.3 req/s
+  Tokens: completion=1141  Gen throughput=68.28 tok/s
+  Server RSS after round: 58.45 MB  (PIDs: 37361)
+
+Round 3/3:
+  Latency avg=15.5772s p50=15.2282s p95=16.3256s p99=16.3256s min=14.7015s max=16.3256s
+  Errors=0  Round wall=16.328s  Throughput=0.31 req/s
+  Tokens: completion=1113  Gen throughput=68.17 tok/s
+  Server RSS after round: 58.55 MB  (PIDs: 37361)
+
+Overall:
+  Latency avg=15.6814s p50=15.8564s p95=17.4733s p99=17.536s min=13.7078s max=17.536s
+  Errors=0  Total wall=50.575s  Throughput=0.3 req/s
+  Tokens: completion=3224  Gen throughput=63.75 tok/s
+
+Running benchmark with rounds=5, concurrency=10
+Benchmarking model='mlx-community/gemma-3-12b-it-4bit' at base_url='http://localhost:10240/v1'
+Rounds=3, Requests/Round=10, Concurrency=10
+Memory sampling targets processes listening on port 10240 (or PID=None if provided)
+
+Round 1/3:
+  Latency avg=28.0097s p50=27.7044s p95=29.6638s p99=29.6638s min=23.7265s max=29.6638s
+  Errors=0  Round wall=29.665s  Throughput=0.34 req/s
+  Tokens: completion=2027  Gen throughput=68.33 tok/s
+  Server RSS after round: 58.72 MB  (PIDs: 37361)
+
+Round 2/3:
+  Latency avg=24.4242s p50=24.9922s p95=27.1348s p99=27.1348s min=17.2389s max=27.1348s
+  Errors=0  Round wall=27.138s  Throughput=0.37 req/s
+  Tokens: completion=1856  Gen throughput=68.39 tok/s
+  Server RSS after round: 58.77 MB  (PIDs: 37361)
+
+Round 3/3:
+  Latency avg=25.416s p50=25.7525s p95=29.0642s p99=29.0642s min=19.052s max=29.0642s
+  Errors=0  Round wall=29.067s  Throughput=0.34 req/s
+  Tokens: completion=1976  Gen throughput=67.98 tok/s
+  Server RSS after round: 58.88 MB  (PIDs: 37361)
+
+Overall:
+  Latency avg=25.95s p50=26.421s p95=29.5103s p99=29.6638s min=17.2389s max=29.6638s
+  Errors=0  Total wall=85.87s  Throughput=0.35 req/s
+  Tokens: completion=5859  Gen throughput=68.23 tok/s
+
+Running benchmark with rounds=5, concurrency=1
+Benchmarking model='mlx-community/gemma-3-12b-it-4bit' at base_url='http://localhost:10240/v1'
+Rounds=3, Requests/Round=15, Concurrency=15
+Memory sampling targets processes listening on port 10240 (or PID=None if provided)
+
+Round 1/3:
+  Latency avg=35.5106s p50=33.5317s p95=44.4942s p99=44.5695s min=25.6527s max=44.5695s
+  Errors=0  Round wall=44.57s  Throughput=0.34 req/s
+  Tokens: completion=3049  Gen throughput=68.41 tok/s
+  Server RSS after round: 59.23 MB  (PIDs: 37361)
+
+Round 2/3:
+  Latency avg=33.1298s p50=30.7213s p95=43.1689s p99=43.653s min=25.0889s max=43.653s
+  Errors=0  Round wall=43.656s  Throughput=0.34 req/s
+  Tokens: completion=2991  Gen throughput=68.51 tok/s
+  Server RSS after round: 59.5 MB  (PIDs: 37361)
+
+Round 3/3:
+  Latency avg=33.5093s p50=34.5444s p95=44.7024s p99=45.4015s min=12.3164s max=45.4015s
+  Errors=0  Round wall=45.406s  Throughput=0.33 req/s
+  Tokens: completion=3112  Gen throughput=68.54 tok/s
+  Server RSS after round: 59.53 MB  (PIDs: 37361)
+
+Overall:
+  Latency avg=34.0499s p50=32.2318s p95=44.6604s p99=45.4015s min=12.3164s max=45.4015s
+  Errors=0  Total wall=133.632s  Throughput=0.34 req/s
+  Tokens: completion=9152  Gen throughput=68.49 tok/s
+
+Running benchmark with rounds=5, concurrency=20
+Benchmarking model='mlx-community/gemma-3-12b-it-4bit' at base_url='http://localhost:10240/v1'
+Rounds=3, Requests/Round=20, Concurrency=20
+Memory sampling targets processes listening on port 10240 (or PID=None if provided)
+
+Round 1/3:
+  Latency avg=35.9668s p50=35.6147s p95=50.7041s p99=51.4085s min=19.1673s max=51.4085s
+  Errors=0  Round wall=51.409s  Throughput=0.39 req/s
+  Tokens: completion=3511  Gen throughput=68.3 tok/s
+  Server RSS after round: 59.81 MB  (PIDs: 37361)
+
+Round 2/3:
+  Latency avg=38.5228s p50=32.2402s p95=55.0369s p99=55.1024s min=22.0235s max=55.1024s
+  Errors=0  Round wall=55.106s  Throughput=0.36 req/s
+  Tokens: completion=3784  Gen throughput=68.67 tok/s
+  Server RSS after round: 59.86 MB  (PIDs: 37361)
+
+Round 3/3:
+  Latency avg=33.9126s p50=39.3487s p95=48.221s p99=49.1198s min=11.6078s max=49.1198s
+  Errors=0  Round wall=49.124s  Throughput=0.41 req/s
+  Tokens: completion=3358  Gen throughput=68.36 tok/s
+  Server RSS after round: 59.95 MB  (PIDs: 37361)
+
+Overall:
+  Latency avg=36.1341s p50=39.3487s p95=51.4085s p99=55.0369s min=11.6078s max=55.1024s
+  Errors=0  Total wall=155.639s  Throughput=0.39 req/s
+  Tokens: completion=10653  Gen throughput=68.45 tok/s
+
+Running benchmark with rounds=5, concurrency=20
+Benchmarking model='mlx-community/gemma-3-12b-it-4bit' at base_url='http://localhost:10240/v1'
+Rounds=3, Requests/Round=30, Concurrency=30
+Memory sampling targets processes listening on port 10240 (or PID=None if provided)
+
+Round 1/3:
+  Latency avg=52.7336s p50=63.6482s p95=74.9051s p99=74.9447s min=15.3765s max=74.9447s
+  Errors=0  Round wall=74.947s  Throughput=0.4 req/s
+  Tokens: completion=5135  Gen throughput=68.52 tok/s
+  Server RSS after round: 60.62 MB  (PIDs: 37361)
+
+Round 2/3:
+  Latency avg=52.202s p50=64.7412s p95=73.9042s p99=75.3417s min=14.1166s max=75.3417s
+  Errors=0  Round wall=75.345s  Throughput=0.4 req/s
+  Tokens: completion=5170  Gen throughput=68.62 tok/s
+  Server RSS after round: 60.78 MB  (PIDs: 37361)
+
+Round 3/3:
+  Latency avg=54.7542s p50=63.7027s p95=72.5581s p99=78.0611s min=10.9061s max=78.0611s
+  Errors=0  Round wall=78.065s  Throughput=0.38 req/s
+  Tokens: completion=5293  Gen throughput=67.8 tok/s
+  Server RSS after round: 60.88 MB  (PIDs: 37361)
+
+Overall:
+  Latency avg=53.2299s p50=63.7027s p95=74.9447s p99=78.0555s min=10.9061s max=78.0611s
+  Errors=0  Total wall=228.357s  Throughput=0.39 req/s
+  Tokens: completion=15598  Gen throughput=68.31 tok/s
+
+Running benchmark with rounds=5, concurrency=20
+Benchmarking model='mlx-community/gemma-3-12b-it-4bit' at base_url='http://localhost:10240/v1'
+Rounds=3, Requests/Round=50, Concurrency=50
+Memory sampling targets processes listening on port 10240 (or PID=None if provided)
+
+Round 1/3:
+  Latency avg=99.1238s p50=112.3283s p95=133.8249s p99=133.8264s min=12.5395s max=133.8264s
+  Errors=0  Round wall=133.829s  Throughput=0.37 req/s
+  Tokens: completion=9176  Gen throughput=68.56 tok/s
+  Server RSS after round: 62.03 MB  (PIDs: 37361)
+
+Round 2/3:
+  Latency avg=93.0307s p50=113.2777s p95=125.203s p99=125.2101s min=11.2284s max=125.2101s
+  Errors=0  Round wall=125.215s  Throughput=0.4 req/s
+  Tokens: completion=8577  Gen throughput=68.5 tok/s
+  Server RSS after round: 62.53 MB  (PIDs: 37361)
+
+Round 3/3:
+  Latency avg=94.5283s p50=119.0578s p95=123.3379s p99=123.3443s min=12.8806s max=123.3443s
+  Errors=0  Round wall=123.348s  Throughput=0.41 req/s
+  Tokens: completion=8421  Gen throughput=68.27 tok/s
+  Server RSS after round: 62.64 MB  (PIDs: 37361)
+
+Overall:
+  Latency avg=95.5609s p50=117.5526s p95=131.1407s p99=133.8249s min=11.2284s max=133.8264s
+  Errors=0  Total wall=382.392s  Throughput=0.39 req/s
+  Tokens: completion=26174  Gen throughput=68.45 tok/s
+
+Running benchmark with rounds=5, concurrency=20
+Benchmarking model='mlx-community/gemma-3-12b-it-4bit' at base_url='http://localhost:10240/v1'
+Rounds=3, Requests/Round=80, Concurrency=80
+Memory sampling targets processes listening on port 10240 (or PID=None if provided)
+
+Round 1/3:
+  Latency avg=169.3887s p50=196.8176s p95=203.7509s p99=203.7526s min=18.8316s max=203.7533s
+  Errors=0  Round wall=203.758s  Throughput=0.39 req/s
+  Tokens: completion=13884  Gen throughput=68.14 tok/s
+  Server RSS after round: 63.72 MB  (PIDs: 37361)
+
+Round 2/3:
+  Latency avg=1536.0613s p50=1801.343s p95=1801.461s p99=1801.5061s min=19.0983s max=1801.5095s
+  Errors=68  Round wall=1801.527s  Throughput=0.04 req/s
+  Tokens: completion=2125  Gen throughput=1.18 tok/s
+  Server RSS after round: 68.78 MB  (PIDs: 37361)
+
+Round 3/3:
+  Latency avg=1801.3303s p50=1801.33s p95=1801.4407s p99=1801.4663s min=1801.1775s max=1801.5044s
+  Errors=80  Round wall=1801.528s  Throughput=0.04 req/s
+  Tokens: completion=0  Gen throughput=0.0 tok/s
+  Server RSS after round: 78.02 MB  (PIDs: 37361)
+
+Overall:
+  Latency avg=1168.9268s p50=1801.2595s p95=1801.4523s p99=1801.5044s min=18.8316s max=1801.5095s
+  Errors=148  Total wall=3806.813s  Throughput=0.06 req/s
+  Tokens: completion=16009  Gen throughput=4.21 tok/s

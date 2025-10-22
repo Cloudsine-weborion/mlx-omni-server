@@ -194,7 +194,7 @@ class AnthropicMessagesAdapter:
             "max_tokens": request.max_tokens,
             "sampler": sampler_config,
             "template_kwargs": template_kwargs,
-            "enable_prompt_cache": True,
+            "enable_prompt_cache": False,
         }
 
         # Note: ChatGenerator doesn't currently support stop_sequences

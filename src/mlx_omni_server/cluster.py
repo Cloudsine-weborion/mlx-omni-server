@@ -114,8 +114,8 @@ def launch_backends(
         # Start in new session to manage signals cleanly
         proc = await asyncio.create_subprocess_exec(
             *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+            stdout=None,
+            stderr=None,
             start_new_session=True,
         )
         return proc
