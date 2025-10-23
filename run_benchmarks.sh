@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Run MLX Omni Server benchmarks with different parameters
+# Usage: ./run_benchmarks.sh [chat|vision]
 # Modify the --rounds and --concurrency values as needed
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -12,8 +13,15 @@ if [ ! -x "$PY_BIN" ]; then
   PY_BIN="python"
 fi
 
-BENCH_PY="$REPO_DIR/examples/benchmark_chat.py"
-OUT="$REPO_DIR/examples/results10.txt"
+BENCH_TYPE="${1:-chat}"
+if [ "$BENCH_TYPE" = "vision" ]; then
+  BENCH_PY="$REPO_DIR/examples/benchmark_vision.py"
+  OUT="$REPO_DIR/examples/results_vision.txt"
+else
+  BENCH_PY="$REPO_DIR/examples/benchmark_chat.py"
+  OUT="$REPO_DIR/examples/results_chat.txt"
+fi
+
 : > "$OUT"
 
 for c in $(seq 1 10); do
