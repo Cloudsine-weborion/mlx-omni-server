@@ -27,6 +27,7 @@ import argparse
 import base64
 import os
 import statistics
+import mimetypes
 import subprocess
 import sys
 import time
@@ -73,7 +74,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--image",
         type=str,
-        default="examples/cow.jpg",
+        default="examples/stickman.png",
         help="Path to the image file for vision input",
     )
     parser.add_argument("--pid", type=int, default=None, help="Server PID for memory sampling (optional)")
@@ -178,21 +179,30 @@ def load_image_base64(image_path: str) -> str:
         return base64.b64encode(f.read()).decode("utf-8")
 
 
-# ---> main() > [perform_chat] > client.chat.completions.create(...) with image
-def perform_chat(client: OpenAI, model: str, index: int, image_path: str, vary_prompt: bool, streaming: bool) -> RequestResult:
-    base_text = "Describe the cow in this image in detail."
+def perform_chat(client: OpenAI, model: str, index: int, image_path: Optional[str], vary_prompt: bool, streaming: bool) -> RequestResult:
+    # Build user message content, optionally with image attachment
+    has_image = image_path is not None
+    base_text = "Describe this image briefly." if has_image else "Write a brief description of a cow."
     text = base_text if not vary_prompt else f"{base_text} (req={index})"
 
-    try:
-        base64_image = load_image_base64(image_path)
-    except Exception as e:
-        return RequestResult(index=index, latency_s=0.0, ttfb_s=0.0, error=f"Failed to load image: {str(e)}")
+    messages: List[dict]
+    if has_image:
+        try:
+            base64_image = load_image_base64(image_path)  # type: ignore[arg-type]
+        except Exception as e:
+            return RequestResult(index=index, latency_s=0.0, ttfb_s=0.0, error=f"Failed to load image: {str(e)}")
 
-    content = [
-        {"type": "text", "text": text},
-        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
-    ]
-    messages = [{"role": "user", "content": content}]
+        mime, _ = mimetypes.guess_type(image_path)  # type: ignore[arg-type]
+        if mime is None:
+            mime = "image/jpeg"
+        data_url = f"data:{mime};base64,{base64_image}"
+        content = [
+            {"type": "text", "text": text},
+            {"type": "image_url", "image_url": data_url},  # string value as required by server schema
+        ]
+        messages = [{"role": "user", "content": content}]
+    else:
+        messages = [{"role": "user", "content": text}]
 
     logger.info(f"Starting vision request {index}")
     start = time.perf_counter()
@@ -285,7 +295,7 @@ def perform_chat(client: OpenAI, model: str, index: int, image_path: str, vary_p
 
 # ---> main() > [run_round] > ThreadPoolExecutor coordinates parallel requests
 def run_round(
-    client: OpenAI, model: str, num_requests: int, concurrency: int, image_path: str, vary_prompt: bool, streaming: bool
+    client: OpenAI, model: str, num_requests: int, concurrency: int, image_path: Optional[str], vary_prompt: bool, streaming: bool
 ) -> Tuple[List[RequestResult], float]:
     results: List[RequestResult] = []
     started_at = time.perf_counter()
@@ -418,38 +428,49 @@ def main() -> None:
 
     # Overall summary
     if overall_requests > 0:
-        overall_latencies.sort()
-        def pct(values: List[float], p: float) -> float:
-            if not values:
-                return 0.0
-            if len(values) == 1:
-                return values[0]
-            rank = max(1, min(len(values), int(round(p * len(values)))))
-            return values[rank - 1]
-
-        overall_avg = round(statistics.fmean(overall_latencies), 4)
-        overall_p50 = round(pct(overall_latencies, 0.50), 4)
-        overall_p95 = round(pct(overall_latencies, 0.95), 4)
-        overall_p99 = round(pct(overall_latencies, 0.99), 4)
-        overall_min = round(overall_latencies[0], 4)
-        overall_max = round(overall_latencies[-1], 4)
-        overall_tput = round(overall_requests / total_wall_time, 2) if total_wall_time > 0 else 0.0
-
         print("Overall:")
-        print(
-            f"  Latency avg={overall_avg}s p50={overall_p50}s p95={overall_p95}s p99={overall_p99}s min={overall_min}s max={overall_max}s"
-        )
+        if overall_latencies:
+            overall_latencies.sort()
+            def pct(values: List[float], p: float) -> float:
+                if not values:
+                    return 0.0
+                if len(values) == 1:
+                    return values[0]
+                rank = max(1, min(len(values), int(round(p * len(values)))))
+                return values[rank - 1]
+
+            overall_avg = round(statistics.fmean(overall_latencies), 4)
+            overall_p50 = round(pct(overall_latencies, 0.50), 4)
+            overall_p95 = round(pct(overall_latencies, 0.95), 4)
+            overall_p99 = round(pct(overall_latencies, 0.99), 4)
+            overall_min = round(overall_latencies[0], 4)
+            overall_max = round(overall_latencies[-1], 4)
+            print(
+                f"  Latency avg={overall_avg}s p50={overall_p50}s p95={overall_p95}s p99={overall_p99}s min={overall_min}s max={overall_max}s"
+            )
+        else:
+            print("  No successful requests to report latency stats.")
+
         if overall_ttfbs:
             overall_ttfbs.sort()
+            def pct_ttfb(values: List[float], p: float) -> float:
+                if not values:
+                    return 0.0
+                if len(values) == 1:
+                    return values[0]
+                rank = max(1, min(len(values), int(round(p * len(values)))))
+                return values[rank - 1]
             overall_avg_ttfb = round(statistics.fmean(overall_ttfbs), 4)
-            overall_p50_ttfb = round(pct(overall_ttfbs, 0.50), 4)
-            overall_p95_ttfb = round(pct(overall_ttfbs, 0.95), 4)
-            overall_p99_ttfb = round(pct(overall_ttfbs, 0.99), 4)
+            overall_p50_ttfb = round(pct_ttfb(overall_ttfbs, 0.50), 4)
+            overall_p95_ttfb = round(pct_ttfb(overall_ttfbs, 0.95), 4)
+            overall_p99_ttfb = round(pct_ttfb(overall_ttfbs, 0.99), 4)
             overall_min_ttfb = round(overall_ttfbs[0], 4)
             overall_max_ttfb = round(overall_ttfbs[-1], 4)
             print(
                 f"  TTFB avg={overall_avg_ttfb}s p50={overall_p50_ttfb}s p95={overall_p95_ttfb}s p99={overall_p99_ttfb}s min={overall_min_ttfb}s max={overall_max_ttfb}s"
             )
+
+        overall_tput = round(overall_requests / total_wall_time, 2) if total_wall_time > 0 else 0.0
         print(
             f"  Errors={overall_errors}  Total wall={round(total_wall_time, 3)}s  Throughput={overall_tput} req/s"
         )
