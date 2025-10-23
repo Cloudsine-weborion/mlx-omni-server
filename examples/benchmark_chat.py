@@ -23,6 +23,8 @@ from __future__ import annotations
 
 import argparse
 import os
+import base64
+import mimetypes
 import statistics
 import subprocess
 import sys
@@ -73,6 +75,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--vary-prompt",
         action="store_true",
         help="Vary prompt per request to reduce caching effects",
+    )
+    parser.add_argument(
+        "--image",
+        type=str,
+        default=None,
+        help="Image path or URL to include in user message (vision models)",
     )
     return parser
 
@@ -162,8 +170,38 @@ def build_client(base_url: str) -> OpenAI:
     )
 
 
+# ---> helper > [make_image_part] > normalize file/URL into image_url content part
+def make_image_part(image: Optional[str]) -> Optional[dict]:
+    if not image:
+        return None
+    try:
+        if image.startswith("http://") or image.startswith("https://"):
+            return {"type": "image_url", "image_url": image}
+        # Treat as local file
+        if not os.path.isfile(image):
+            raise FileNotFoundError(f"Image not found: {image}")
+        with open(image, "rb") as f:
+            data = f.read()
+        mime, _ = mimetypes.guess_type(image)
+        if mime is None:
+            mime = "image/png"
+        b64 = base64.b64encode(data).decode("ascii")
+        data_url = f"data:{mime};base64,{b64}"
+        return {"type": "image_url", "image_url": data_url}
+    except Exception as e:
+        logger.warning(f"Failed to prepare image '{image}': {e}")
+        return None
+
+
 # ---> main() > [perform_chat] > client.chat.completions.create(...)
-def perform_chat(client: OpenAI, model: str, index: int, vary_prompt: bool, streaming: bool) -> RequestResult:
+def perform_chat(
+    client: OpenAI,
+    model: str,
+    index: int,
+    vary_prompt: bool,
+    streaming: bool,
+    image: Optional[str],
+) -> RequestResult:
     # tools = [
     #     {
     #         "type": "function",
@@ -185,9 +223,17 @@ def perform_chat(client: OpenAI, model: str, index: int, vary_prompt: bool, stre
     #     }
     # ]
 
-    base_text = "How are you today?"
+    base_text = "Describe this image briefly."
     content = base_text if not vary_prompt else f"{base_text} (req={index})"
-    messages = [{"role": "user", "content": content}]
+    image_part = make_image_part(image)
+    if image_part is not None:
+        user_content = [
+            {"type": "text", "text": content},
+            image_part,
+        ]
+    else:
+        user_content = content
+    messages = [{"role": "user", "content": user_content}]
 
     logger.info(f"Starting chat request {index}")
     start = time.perf_counter()
@@ -288,13 +334,27 @@ def perform_chat(client: OpenAI, model: str, index: int, vary_prompt: bool, stre
 
 # ---> main() > [run_round] > ThreadPoolExecutor coordinates parallel requests
 def run_round(
-    client: OpenAI, model: str, num_requests: int, concurrency: int, vary_prompt: bool, streaming: bool
+    client: OpenAI,
+    model: str,
+    num_requests: int,
+    concurrency: int,
+    vary_prompt: bool,
+    streaming: bool,
+    image: Optional[str],
 ) -> Tuple[List[RequestResult], float]:
     results: List[RequestResult] = []
     started_at = time.perf_counter()
     with ThreadPoolExecutor(max_workers=concurrency) as pool:
         futures = [
-            pool.submit(perform_chat, client=client, model=model, index=i, vary_prompt=vary_prompt, streaming=streaming)
+            pool.submit(
+                perform_chat,
+                client=client,
+                model=model,
+                index=i,
+                vary_prompt=vary_prompt,
+                streaming=streaming,
+                image=image,
+            )
             for i in range(num_requests)
         ]
         for fut in as_completed(futures):
@@ -387,6 +447,7 @@ def main() -> None:
             concurrency=concurrency,
             vary_prompt=vary_prompt,
             streaming=streaming,
+            image=args.image,
         )
         total_wall_time += round_wall_s
         summary = summarize_latencies(results)
