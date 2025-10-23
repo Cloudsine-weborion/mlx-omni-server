@@ -1,33 +1,20 @@
 #!/bin/bash
 
-# Run MLX Omni Server benchmarks with different parameters
-# Usage: ./run_benchmarks.sh [chat|vision]
-# Modify the --rounds and --concurrency values as needed
+# Run MLX Omni Server vision benchmark (rounds=5) across specified concurrencies
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-REPO_DIR="$SCRIPT_DIR"
+ROUNDS=5
+CONCURRENCIES=(2 3 4 5 6 7 8 9 10 15)
+MODEL="mlx-community/gemma-3-12b-it-4bit"
+BASE_URL="http://localhost:10240/v1"
+IMAGE="/Users/applesmacbookpro/Documents/mlx-omni-server/examples/stickman.png"
 
-# Prefer repo venv python if available
-PY_BIN="$REPO_DIR/venv/bin/python"
-if [ ! -x "$PY_BIN" ]; then
-  PY_BIN="python"
-fi
-
-BENCH_TYPE="${1:-chat}"
-if [ "$BENCH_TYPE" = "vision" ]; then
-  BENCH_PY="$REPO_DIR/examples/benchmark_vision.py"
-  OUT="$REPO_DIR/examples/results_vision.txt"
-else
-  BENCH_PY="$REPO_DIR/examples/benchmark_chat.py"
-  OUT="$REPO_DIR/examples/results_chat.txt"
-fi
-
-: > "$OUT"
-
-for c in $(seq 1 10); do
-  echo "==== Concurrency $c ====\n" >> "$OUT"
-  STREAMING=true "$PY_BIN" "$BENCH_PY" --rounds 3 --vary-prompt --concurrency "$c" >> "$OUT" 2>&1
-  echo "" >> "$OUT"
+for c in "${CONCURRENCIES[@]}"; do
+echo "Running vision benchmark with rounds=${ROUNDS}, concurrency=${c}"
+python examples/benchmark_vision.py \
+  --rounds "${ROUNDS}" \
+  --concurrency "${c}" \
+  --model "${MODEL}" \
+  --base-url "${BASE_URL}" \
+  --image "${IMAGE}"
+echo ""
 done
-
-echo "All runs complete. Results written to $OUT"
