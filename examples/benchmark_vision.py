@@ -43,6 +43,44 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Prompts pool used by choose_base_text (vision-specific phrasings)
+PROMPTS: List[str] = [
+    "Describe this image briefly.",
+    "Provide a short caption for this image.",
+    "Summarize what is shown in the image in one sentence.",
+    "Give a concise description of this picture.",
+    "What is depicted in this image? Keep it brief.",
+    "Write a short description of the image.",
+    "In one line, describe the content of this image.",
+    "Offer a brief explanation of what the image shows.",
+    "Create a short caption describing the image.",
+    "What is the main subject of this image?",
+    "Describe the scene in this photo succinctly.",
+    "Provide a compact summary of the image contents.",
+    "Generate a concise caption for the picture.",
+    "Briefly explain what can be seen in the image.",
+    "In a single sentence, what does this image show?",
+    "Give a one-sentence description of this image.",
+    "Provide a minimal caption for this picture.",
+    "Describe the key elements in this image briefly.",
+    "What is happening in this image? Short answer.",
+    "Write a brief alt-text for this image.",
+    "Summarize the visual content in a short phrase.",
+    "Give a short, clear description of this image.",
+    "Offer a succinct description of the picture.",
+    "Provide a brief summary of what the image depicts.",
+    "Describe this image in under 15 words.",
+    "Provide a compact alt description of the image.",
+    "Give a terse caption for what this image shows.",
+    "Briefly identify the subject and context of the image.",
+    "State what the image contains in one short line.",
+    "Provide a minimalistic description of this image.",
+]
+
+# ---> perform_chat > [choose_base_text] > select unique base_text per request
+def choose_base_text(global_index: int) -> str:
+    return PROMPTS[global_index % len(PROMPTS)]
+
 # ---> CLI entry > [build_arg_parser] > argparse parses CLI flags for benchmark
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Concurrent vision benchmark for MLX Omni Server")
@@ -183,11 +221,11 @@ def load_image_base64(image_path: str) -> str:
         return base64.b64encode(f.read()).decode("utf-8")
 
 
-def perform_chat(client: OpenAI, model: str, index: int, image_path: Optional[str], vary_prompt: bool, streaming: bool) -> RequestResult:
+def perform_chat(client: OpenAI, model: str, index: int, global_index: int, image_path: Optional[str], vary_prompt: bool, streaming: bool) -> RequestResult:
     # Build user message content, optionally with image attachment
     has_image = image_path is not None
-    base_text = "Describe this image briefly." if has_image else "Write a brief description of a cow."
-    text = base_text if not vary_prompt else f"{base_text} (req={index})"
+    base_text = choose_base_text(global_index) if has_image else "Write a brief description of a cow."
+    text = base_text  # We follow chat benchmark: choose from PROMPTS for natural variation
 
     messages: List[dict]
     if has_image:
@@ -305,12 +343,22 @@ def perform_chat(client: OpenAI, model: str, index: int, image_path: Optional[st
 # ---> main() > [run_round] > ThreadPoolExecutor coordinates parallel requests
 def run_round(
     client: OpenAI, model: str, num_requests: int, concurrency: int, image_path: Optional[str], vary_prompt: bool, streaming: bool
+    , start_index: int
 ) -> Tuple[List[RequestResult], float]:
     results: List[RequestResult] = []
     started_at = time.perf_counter()
     with ThreadPoolExecutor(max_workers=concurrency) as pool:
         futures = [
-            pool.submit(perform_chat, client=client, model=model, index=i, image_path=image_path, vary_prompt=vary_prompt, streaming=streaming)
+            pool.submit(
+                perform_chat,
+                client=client,
+                model=model,
+                index=i,
+                global_index=start_index + i,
+                image_path=image_path,
+                vary_prompt=vary_prompt,
+                streaming=streaming,
+            )
             for i in range(num_requests)
         ]
         for fut in as_completed(futures):
@@ -420,6 +468,7 @@ def main() -> None:
             image_path=image_path,
             vary_prompt=vary_prompt,
             streaming=streaming,
+            start_index=overall_requests,
         )
         total_wall_time += round_wall_s
         round_gen_s = compute_generation_window_s(results)

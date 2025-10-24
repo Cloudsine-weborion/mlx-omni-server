@@ -1,0 +1,30 @@
+Benchmarking model='mlx-community/gemma-3-12b-it-4bit' at base_url='http://127.0.0.1:10240/v1'
+Rounds=3, Requests/Round=10, Concurrency=10
+Mode: Streaming (TTFB measured)
+Memory sampling targets processes listening on port 10240 (or PID=None if provided)
+
+Round 1/3:
+  Latency avg=0.0s p50=0.0s p95=0.0s p99=0.0s min=0.0s max=0.0s
+  Errors=10  Round wall=15.961s  Gen window=0.0s  Throughput=0.0 req/s
+  Tokens: completion=560  Gen throughput=0.0 tok/s
+  Server RSS after round: 59.8 MB  (PIDs: 25749)
+
+Round 2/3:
+  Latency avg=8.8079s p50=8.3632s p95=9.7847s p99=9.7847s min=7.9417s max=9.7847s
+  TTFB avg=1.246s p50=1.2017s p95=1.2985s p99=1.2985s min=1.2017s max=1.2985s
+  Errors=6  Round wall=20.626s  Gen window=8.583s  Throughput=1.17 req/s
+  Tokens: completion=920  Gen throughput=107.18 tok/s
+  Server RSS after round: 59.95 MB  (PIDs: 25749)
+
+Round 3/3:
+  Latency avg=9.4299s p50=9.3886s p95=9.5693s p99=9.5693s min=9.3319s max=9.5693s
+  TTFB avg=1.0439s p50=1.3902s p95=1.3381s p99=1.3381s min=0.4034s max=1.3902s
+  Errors=7  Round wall=16.494s  Gen window=9.167s  Throughput=1.09 req/s
+  Tokens: completion=736  Gen throughput=80.29 tok/s
+  Server RSS after round: 60.09 MB  (PIDs: 25749)
+
+Overall:
+  Latency avg=9.0745s p50=9.3319s p95=9.7847s p99=9.7847s min=7.9417s max=9.7847s
+  TTFB avg=1.1594s p50=1.2721s p95=1.3902s p99=1.3902s min=0.4034s max=1.3902s
+  Errors=23  Total wall=53.081s  Gen window total=17.751s  Throughput=1.69 req/s
+  Tokens: completion=2216  Gen throughput=124.84 tok/s
