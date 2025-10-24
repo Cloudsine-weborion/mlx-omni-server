@@ -23,15 +23,12 @@ from __future__ import annotations
 
 import argparse
 import os
-import base64
-import mimetypes
 import statistics
 import subprocess
-import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import Iterable, List, Optional, Tuple
+from typing import List, Optional, Tuple
 from urllib.parse import urlparse
 
 from openai import OpenAI
@@ -40,6 +37,114 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Prompts pool used by choose_base_text
+PROMPTS: List[str] = [
+    "How are you feeling today?",
+    "What’s going on with you today?",
+    "How’s your day treating you so far?",
+    "What kind of day are you having?",
+    "How have you been today?",
+    "What’s your mood like today?",
+    "How’s life treating you right now?",
+    "What’s up with you today?",
+    "How are things going for you today?",
+    "How do you feel this morning?",
+    "What’s happening in your world today?",
+    "How’s everything on your end today?",
+    "How are you holding up today?",
+    "What kind of vibe are you on today?",
+    "How’s your spirit doing today?",
+    "What’s the energy like for you today?",
+    "How’s the day shaping up for you?",
+    "How are things in your corner of the world today?",
+    "What kind of mood did you wake up in?",
+    "How’s your heart feeling today?",
+    "What’s the tone of your day so far?",
+    "How’s your mind doing today?",
+    "What’s your emotional weather like today?",
+    "How’s your morning been treating you?",
+    "How are your vibes today?",
+    "What’s the pace of your day so far?",
+    "How’s everything feeling for you today?",
+    "What kind of morning are you having?",
+    "How’s your energy level right now?",
+    "What’s life like for you today?",
+    "How’s your day unfolding so far?",
+    "What’s your mindset like today?",
+    "How’s your afternoon shaping up?",
+    "What’s your headspace like right now?",
+    "How are you managing today?",
+    "How’s the world treating you at the moment?",
+    "What kind of day is it turning out to be?",
+    "How’s your motivation today?",
+    "What’s your day been like up to now?",
+    "How are things going in your life today?",
+    "How’s your current mood?",
+    "What’s the best thing about your day so far?",
+    "How’s your stress level today?",
+    "What’s on your mind today?",
+    "How’s the vibe around you right now?",
+    "What’s your day been feeling like?",
+    "How are you coping today?",
+    "How’s your emotional state today?",
+    "What kind of start did you have today?",
+    "How’s your week going so far, starting with today?",
+    "What’s the highlight of your day so far?",
+    "How’s your focus today?",
+    "What kind of mood are you carrying today?",
+    "How’s your inner world today?",
+    "What’s today been like for you so far?",
+    "How are your thoughts flowing today?",
+    "How’s your energy treating you right now?",
+    "What’s your body telling you today?",
+    "How’s your outlook on the day?",
+    "What kind of feelings are you sitting with today?",
+    "How’s everything going emotionally today?",
+    "What’s your general feeling about today?",
+    "How’s your day looking at this point?",
+    "What kind of rhythm does your day have?",
+    "How’s your sense of peace today?",
+    "What’s the mood in your world right now?",
+    "How are your plans going today?",
+    "What’s the day brought you so far?",
+    "How’s your motivation holding up today?",
+    "What’s your state of mind right now?",
+    "How are you doing emotionally today?",
+    "How’s your day running?",
+    "What kind of thoughts are filling your mind today?",
+    "How are you balancing things today?",
+    "How’s your happiness level right now?",
+    "What’s your feeling about today so far?",
+    "How’s your sense of calm today?",
+    "What kind of time are you having today?",
+    "How’s your day moving along?",
+    "What’s your emotional temperature today?",
+    "How’s your perspective on the day?",
+    "What kind of energy surrounds you today?",
+    "How are things unfolding in your world today?",
+    "How’s your morning energy today?",
+    "What’s today been treating you like?",
+    "How’s your day experience going?",
+    "What kind of day energy do you feel?",
+    "How’s your sense of joy today?",
+    "What’s the feeling of your day so far?",
+    "How are your spirits today?",
+    "How’s your mental space right now?",
+    "What’s your emotional vibe like today?",
+    "How are you finding the day so far?",
+    "How’s your energy flow today?",
+    "What kind of day mood are you in?",
+    "How’s your sense of balance today?",
+    "What’s your take on how today’s going?",
+    "How are your thoughts sitting today?",
+    "How’s your sense of purpose today?",
+    "What’s today feeling like for you overall?",
+]
+
+# ---> perform_chat > [choose_base_text] > select unique base_text per request
+def choose_base_text(global_index: int) -> str:
+    return PROMPTS[global_index % len(PROMPTS)]
 
 # ---> CLI entry > [build_arg_parser] > argparse parses CLI flags for benchmark
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -75,12 +180,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--vary-prompt",
         action="store_true",
         help="Vary prompt per request to reduce caching effects",
-    )
-    parser.add_argument(
-        "--image",
-        type=str,
-        default=None,
-        help="Image path or URL to include in user message (vision models)",
     )
     return parser
 
@@ -170,70 +269,18 @@ def build_client(base_url: str) -> OpenAI:
     )
 
 
-# ---> helper > [make_image_part] > normalize file/URL into image_url content part
-def make_image_part(image: Optional[str]) -> Optional[dict]:
-    if not image:
-        return None
-    try:
-        if image.startswith("http://") or image.startswith("https://"):
-            return {"type": "image_url", "image_url": image}
-        # Treat as local file
-        if not os.path.isfile(image):
-            raise FileNotFoundError(f"Image not found: {image}")
-        with open(image, "rb") as f:
-            data = f.read()
-        mime, _ = mimetypes.guess_type(image)
-        if mime is None:
-            mime = "image/png"
-        b64 = base64.b64encode(data).decode("ascii")
-        data_url = f"data:{mime};base64,{b64}"
-        return {"type": "image_url", "image_url": data_url}
-    except Exception as e:
-        logger.warning(f"Failed to prepare image '{image}': {e}")
-        return None
-
-
 # ---> main() > [perform_chat] > client.chat.completions.create(...)
 def perform_chat(
     client: OpenAI,
     model: str,
     index: int,
+    global_index: int,
     vary_prompt: bool,
     streaming: bool,
-    image: Optional[str],
 ) -> RequestResult:
-    # tools = [
-    #     {
-    #         "type": "function",
-    #         "function": {
-    #             "name": "get_current_weather",
-    #             "description": "Get the current weather in a given location",
-    #             "parameters": {
-    #                 "type": "object",
-    #                 "properties": {
-    #                     "location": {
-    #                         "type": "string",
-    #                         "description": "The city and state, e.g. San Francisco, CA",
-    #                     },
-    #                     "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
-    #                 },
-    #                 "required": ["location"],
-    #             },
-    #         },
-    #     }
-    # ]
 
-    base_text = "Describe this image briefly."
-    content = base_text if not vary_prompt else f"{base_text} (req={index})"
-    image_part = make_image_part(image)
-    if image_part is not None:
-        user_content = [
-            {"type": "text", "text": content},
-            image_part,
-        ]
-    else:
-        user_content = content
-    messages = [{"role": "user", "content": user_content}]
+    content = choose_base_text(global_index)
+    messages = [{"role": "user", "content": content}]
 
     logger.info(f"Starting chat request {index}")
     start = time.perf_counter()
@@ -340,7 +387,7 @@ def run_round(
     concurrency: int,
     vary_prompt: bool,
     streaming: bool,
-    image: Optional[str],
+    start_index: int,
 ) -> Tuple[List[RequestResult], float]:
     results: List[RequestResult] = []
     started_at = time.perf_counter()
@@ -351,9 +398,9 @@ def run_round(
                 client=client,
                 model=model,
                 index=i,
+                global_index=start_index + i,
                 vary_prompt=vary_prompt,
                 streaming=streaming,
-                image=image,
             )
             for i in range(num_requests)
         ]
@@ -447,7 +494,7 @@ def main() -> None:
             concurrency=concurrency,
             vary_prompt=vary_prompt,
             streaming=streaming,
-            image=args.image,
+            start_index=overall_requests,
         )
         total_wall_time += round_wall_s
         summary = summarize_latencies(results)
