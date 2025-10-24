@@ -79,7 +79,7 @@ PROMPTS: List[str] = [
 
 # ---> perform_chat > [choose_base_text] > select unique base_text per request
 def choose_base_text(global_index: int) -> str:
-    return PROMPTS[global_index % len(PROMPTS)]
+    return PROMPTS[global_index % len(PROMPTS)] + " in 1 sentence"
 
 # ---> CLI entry > [build_arg_parser] > argparse parses CLI flags for benchmark
 def build_arg_parser() -> argparse.ArgumentParser:
