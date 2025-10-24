@@ -303,6 +303,49 @@ PROCESS_TIME: {timestamp}
 
     return rearranged_prompt
 
+
+# ---> main() > [normalize_base_url] > ensure OpenAI base_url points to /v1 when needed
+def normalize_base_url(base_url: str) -> str:
+    """Normalize base_url for OpenAI client.
+
+    - If pointing to Anthropic subpath, leave unchanged.
+    - Otherwise ensure it ends with /v1 so the client resolves /v1/chat/completions.
+    """
+    try:
+        trimmed = base_url.rstrip("/")
+        if trimmed.endswith("/anthropic"):
+            return base_url
+        if not trimmed.endswith("/v1"):
+            return f"{trimmed}/v1"
+        return base_url
+    except Exception:
+        return base_url
+
+
+# ---> perform_chat/main() > [resolve_image_path] > make image path robust across CWDs
+def resolve_image_path(image_path: Optional[str]) -> Optional[str]:
+    if image_path is None:
+        return None
+    # Absolute path that exists
+    if os.path.isabs(image_path) and os.path.exists(image_path):
+        return image_path
+    # Relative to current working directory
+    cwd_candidate = os.path.abspath(os.path.join(os.getcwd(), image_path))
+    if os.path.exists(cwd_candidate):
+        return cwd_candidate
+    # Relative to this script's repository root
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.abspath(os.path.join(script_dir, os.pardir))
+    repo_candidate = os.path.abspath(os.path.join(repo_root, image_path))
+    if os.path.exists(repo_candidate):
+        return repo_candidate
+    # Relative to this script's directory (in case path was like "stickman.png")
+    script_candidate = os.path.abspath(os.path.join(script_dir, image_path))
+    if os.path.exists(script_candidate):
+        return script_candidate
+    # As-is; downstream will raise a clear FileNotFoundError
+    return image_path
+
 # ---> CLI entry > [build_arg_parser] > argparse parses CLI flags for benchmark
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Concurrent vision benchmark for MLX Omni Server")
@@ -322,7 +365,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--model",
         type=str,
-        default=os.environ.get("MLX_BENCH_MODEL", "mlx-community/gemma-3-9b-pt"),
+        default=os.environ.get("MLX_BENCH_MODEL", "mlx-community/gemma-3-12b-it-4bit"),
         help="Model name to query (vision-capable)",
     )
     parser.add_argument(
@@ -334,7 +377,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--image",
         type=str,
-        default="examples/stickman.png",
+        default="/Users/applesmacbookpro/Documents/mlx-omni-server/examples/stickman.png",
         help="Path to the image file for vision input",
     )
     parser.add_argument("--pid", type=int, default=None, help="Server PID for memory sampling (optional)")
@@ -445,8 +488,9 @@ def snapshot_server_memory(port: Optional[int], explicit_pid: Optional[int]) -> 
 
 # ---> main() > [build_client] > OpenAI client targets MLX Omni Server
 def build_client(base_url: str) -> OpenAI:
+    normalized = normalize_base_url(base_url)
     return OpenAI(
-        base_url=base_url,
+        base_url=normalized,
         api_key=os.environ.get("OPENAI_API_KEY", "not-needed"),
         timeout=httpx.Timeout(60.0),
     )
@@ -691,7 +735,7 @@ def main() -> None:
 
     base_url = args.base_url
     model = args.model
-    image_path = args.image
+    image_path = resolve_image_path(args.image)
     vary_prompt = bool(args.vary_prompt)
     streaming = os.environ.get('STREAMING', 'false').lower() == 'true'
     slow_threshold = float(args.slow_threshold)
@@ -701,7 +745,7 @@ def main() -> None:
     port = parse_port_from_base_url(base_url)
     client = build_client(base_url)
 
-    print(f"Benchmarking vision model='{model}' at base_url='{base_url}' with image='{image_path}'")
+    print(f"Benchmarking vision model='{model}' at base_url='{normalize_base_url(base_url)}' with image='{image_path}'")
     print(f"Rounds={num_rounds}, Requests/Round={requests_per_round}, Concurrency={concurrency}")
     if streaming:
         print("Mode: Streaming (TTFB measured)")
