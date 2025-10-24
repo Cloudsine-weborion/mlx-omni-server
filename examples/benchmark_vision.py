@@ -121,6 +121,17 @@ def build_arg_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Vary prompt per request to reduce caching effects",
     )
+    parser.add_argument(
+        "--slow-threshold",
+        type=float,
+        default=float(os.environ.get("MLX_BENCH_SLOW_THRESHOLD", 10.0)),
+        help="Seconds threshold to consider a request 'slow' (informational, not an error)",
+    )
+    parser.add_argument(
+        "--slow-counts-as-error",
+        action="store_true",
+        help="If set, slow requests are included in error counts",
+    )
     return parser
 
 
@@ -133,6 +144,7 @@ class RequestResult:
     completion_tokens: int = 0
     total_tokens: int = 0
     error: Optional[str] = None
+    slow: bool = False
     # Absolute timestamps for generation window calculations
     start_ts: float = 0.0
     first_byte_ts: float = 0.0
@@ -221,7 +233,7 @@ def load_image_base64(image_path: str) -> str:
         return base64.b64encode(f.read()).decode("utf-8")
 
 
-def perform_chat(client: OpenAI, model: str, index: int, global_index: int, image_path: Optional[str], vary_prompt: bool, streaming: bool) -> RequestResult:
+def perform_chat(client: OpenAI, model: str, index: int, global_index: int, image_path: Optional[str], vary_prompt: bool, streaming: bool, slow_threshold: float) -> RequestResult:
     # Build user message content, optionally with image attachment
     has_image = image_path is not None
     base_text = choose_base_text(global_index) if has_image else "Write a brief description of a cow."
@@ -291,8 +303,8 @@ def perform_chat(client: OpenAI, model: str, index: int, global_index: int, imag
 
             end = time.perf_counter()
             latency = end - start
-            error = "response took longer than 10s" if latency > 10 else None
-            logger.info(f"Vision request {index} completed (streaming)" if error is None else f"Vision request {index} slow (streaming)")
+            slow = latency > slow_threshold
+            logger.info(f"Vision request {index} completed (streaming)" if not slow else f"Vision request {index} slow (streaming)")
             if not full_content:
                 raise ValueError("No content received in stream")
         else:
@@ -319,8 +331,8 @@ def perform_chat(client: OpenAI, model: str, index: int, global_index: int, imag
             end = time.perf_counter()
             latency = end - start
             ttfb = 0.0  # No TTFB in non-streaming
-            error = "response took longer than 10s" if latency > 10 else None
-            logger.info(f"Vision request {index} completed" if error is None else f"Vision request {index} slow")
+            slow = latency > slow_threshold
+            logger.info(f"Vision request {index} completed" if not slow else f"Vision request {index} slow")
 
         return RequestResult(
             index=index,
@@ -329,7 +341,8 @@ def perform_chat(client: OpenAI, model: str, index: int, global_index: int, imag
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
             total_tokens=total_tokens,
-            error=error,
+            error=None,
+            slow=slow,
             start_ts=start,
             first_byte_ts=first_byte_ts if first_byte_ts > 0 else start,
             end_ts=end,
@@ -343,7 +356,7 @@ def perform_chat(client: OpenAI, model: str, index: int, global_index: int, imag
 # ---> main() > [run_round] > ThreadPoolExecutor coordinates parallel requests
 def run_round(
     client: OpenAI, model: str, num_requests: int, concurrency: int, image_path: Optional[str], vary_prompt: bool, streaming: bool
-    , start_index: int
+    , start_index: int, slow_threshold: float
 ) -> Tuple[List[RequestResult], float]:
     results: List[RequestResult] = []
     started_at = time.perf_counter()
@@ -358,6 +371,7 @@ def run_round(
                 image_path=image_path,
                 vary_prompt=vary_prompt,
                 streaming=streaming,
+                slow_threshold=slow_threshold,
             )
             for i in range(num_requests)
         ]
@@ -368,10 +382,11 @@ def run_round(
 
 
 # ---> main() > [summarize_latencies] > compute avg/p50/p95/p99/min/max and errors
-def summarize_latencies(results: List[RequestResult]) -> dict:
+def summarize_latencies(results: List[RequestResult], slow_counts_as_error: bool) -> dict:
     latencies = [r.latency_s for r in results if r.error is None]
     ttfb_list = [r.ttfb_s for r in results if r.error is None and r.ttfb_s > 0]
-    errors = [r for r in results if r.error]
+    errors = [r for r in results if r.error] + ([r for r in results if r.error is None and r.slow] if slow_counts_as_error else [])
+    slows = [r for r in results if r.error is None and r.slow]
     count = len(results)
 
     def pct(values: List[float], p: float) -> float:
@@ -393,6 +408,7 @@ def summarize_latencies(results: List[RequestResult]) -> dict:
         "max_s": round(max(latencies), 4) if latencies else 0.0,
         "errors": len(errors),
         "error_rate": (len(errors) / count) if count > 0 else 0.0,
+        "slows": len(slows),
     }
 
     if ttfb_list:
@@ -436,6 +452,8 @@ def main() -> None:
     image_path = args.image
     vary_prompt = bool(args.vary_prompt)
     streaming = os.environ.get('STREAMING', 'false').lower() == 'true'
+    slow_threshold = float(args.slow_threshold)
+    slow_counts_as_error = bool(args.slow_counts_as_error)
 
     port = parse_port_from_base_url(base_url)
     client = build_client(base_url)
@@ -469,13 +487,15 @@ def main() -> None:
             vary_prompt=vary_prompt,
             streaming=streaming,
             start_index=overall_requests,
+            slow_threshold=slow_threshold,
         )
         total_wall_time += round_wall_s
         round_gen_s = compute_generation_window_s(results)
         total_generation_window_s += round_gen_s
-        summary = summarize_latencies(results)
+        summary = summarize_latencies(results, slow_counts_as_error=slow_counts_as_error)
         overall_requests += summary["count"]
         overall_errors += summary["errors"]
+        overall_slows = locals().get('overall_slows', 0) + summary.get("slows", 0)
         overall_latencies.extend([res.latency_s for res in results if res.error is None])
         if streaming:
             overall_ttfbs.extend([res.ttfb_s for res in results if res.error is None and res.ttfb_s > 0])
@@ -489,7 +509,7 @@ def main() -> None:
             print(
                 f"  TTFB avg={summary['avg_ttfb_s']}s p50={summary['p50_ttfb_s']}s p95={summary['p95_ttfb_s']}s p99={summary['p99_ttfb_s']}s min={summary['min_ttfb_s']}s max={summary['max_ttfb_s']}s"
             )
-        print(f"  Errors={summary['errors']}  Round wall={round(round_wall_s, 3)}s  Gen window={round(round_gen_s, 3)}s  Throughput={tput} req/s")
+        print(f"  Errors={summary['errors']}  Slows={summary['slows']}  Round wall={round(round_wall_s, 3)}s  Gen window={round(round_gen_s, 3)}s  Throughput={tput} req/s")
 
         # Tokens/sec (generation throughput): sum of completion tokens divided by round wall time
         round_completion_tokens = sum(r.completion_tokens for r in results)
@@ -547,8 +567,10 @@ def main() -> None:
             )
 
         overall_tput = round(overall_requests / total_generation_window_s, 2) if total_generation_window_s > 0 else 0.0
+        # Accumulate slows across rounds
+        overall_slows = locals().get('overall_slows', 0)
         print(
-            f"  Errors={overall_errors}  Total wall={round(total_wall_time, 3)}s  Gen window total={round(total_generation_window_s, 3)}s  Throughput={overall_tput} req/s"
+            f"  Errors={overall_errors}  Slows={overall_slows}  Total wall={round(total_wall_time, 3)}s  Gen window total={round(total_generation_window_s, 3)}s  Throughput={overall_tput} req/s"
         )
         overall_tok_tput = round(overall_completion_tokens / total_generation_window_s, 2) if total_generation_window_s > 0 else 0.0
         print(f"  Tokens: completion={overall_completion_tokens}  Gen throughput={overall_tok_tput} tok/s")

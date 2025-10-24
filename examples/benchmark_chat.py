@@ -181,6 +181,17 @@ def build_arg_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Vary prompt per request to reduce caching effects",
     )
+    parser.add_argument(
+        "--slow-threshold",
+        type=float,
+        default=float(os.environ.get("MLX_BENCH_SLOW_THRESHOLD", 10.0)),
+        help="Seconds threshold to consider a request 'slow' (informational, not an error)",
+    )
+    parser.add_argument(
+        "--slow-counts-as-error",
+        action="store_true",
+        help="If set, slow requests are included in error counts",
+    )
     return parser
 
 
@@ -193,6 +204,7 @@ class RequestResult:
     completion_tokens: int = 0
     total_tokens: int = 0
     error: Optional[str] = None
+    slow: bool = False
     # Absolute timestamps for generation window calculations
     start_ts: float = 0.0
     first_byte_ts: float = 0.0
@@ -281,6 +293,7 @@ def perform_chat(
     global_index: int,
     vary_prompt: bool,
     streaming: bool,
+    slow_threshold: float,
 ) -> RequestResult:
 
     content = choose_base_text(global_index)
@@ -336,8 +349,10 @@ def perform_chat(
 
             end = time.perf_counter()
             latency = end - start
-            error = "response took longer than 10s" if latency > 10 else None
-            logger.info(f"Chat request {index} completed (streaming)" if error is None else f"Chat request {index} slow (streaming)")
+            slow = latency > slow_threshold
+            logger.info(
+                f"Chat request {index} completed (streaming)" if not slow else f"Chat request {index} slow (streaming)"
+            )
             # Confirm well-formed: check if full_content
             if not full_content:
                 raise ValueError("No content received in stream")
@@ -367,8 +382,8 @@ def perform_chat(
             end = time.perf_counter()
             latency = end - start
             ttfb = 0.0  # No TTFB in non-streaming
-            error = "response took longer than 10s" if latency > 10 else None
-            logger.info(f"Chat request {index} completed" if error is None else f"Chat request {index} slow")
+            slow = latency > slow_threshold
+            logger.info(f"Chat request {index} completed" if not slow else f"Chat request {index} slow")
 
         return RequestResult(
             index=index,
@@ -377,7 +392,8 @@ def perform_chat(
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
             total_tokens=total_tokens,
-            error=error,
+            error=None,
+            slow=slow,
             start_ts=start,
             first_byte_ts=first_byte_ts if first_byte_ts > 0 else start,
             end_ts=end,
@@ -397,6 +413,7 @@ def run_round(
     vary_prompt: bool,
     streaming: bool,
     start_index: int,
+    slow_threshold: float,
 ) -> Tuple[List[RequestResult], float]:
     results: List[RequestResult] = []
     started_at = time.perf_counter()
@@ -410,6 +427,7 @@ def run_round(
                 global_index=start_index + i,
                 vary_prompt=vary_prompt,
                 streaming=streaming,
+                slow_threshold=slow_threshold,
             )
             for i in range(num_requests)
         ]
@@ -420,10 +438,11 @@ def run_round(
 
 
 # ---> main() > [summarize_latencies] > compute avg/p50/p95/p99/min/max and errors
-def summarize_latencies(results: List[RequestResult]) -> dict:
+def summarize_latencies(results: List[RequestResult], slow_counts_as_error: bool) -> dict:
     latencies = [r.latency_s for r in results if r.error is None]
     ttfb_list = [r.ttfb_s for r in results if r.error is None and r.ttfb_s > 0]
-    errors = [r for r in results if r.error]
+    errors = [r for r in results if r.error] + ([r for r in results if r.error is None and r.slow] if slow_counts_as_error else [])
+    slows = [r for r in results if r.error is None and r.slow]
     count = len(results)
 
     def pct(values: List[float], p: float) -> float:
@@ -445,6 +464,7 @@ def summarize_latencies(results: List[RequestResult]) -> dict:
         "max_s": round(max(latencies), 4) if latencies else 0.0,
         "errors": len(errors),
         "error_rate": (len(errors) / count) if count > 0 else 0.0,
+        "slows": len(slows),
     }
 
     if ttfb_list:
@@ -489,6 +509,8 @@ def main() -> None:
     model = args.model
     vary_prompt = bool(args.vary_prompt)
     streaming = os.environ.get('STREAMING', 'false').lower() == 'true'
+    slow_threshold = float(args.slow_threshold)
+    slow_counts_as_error = bool(args.slow_counts_as_error)
 
     port = parse_port_from_base_url(base_url)
     client = build_client(base_url)
@@ -510,6 +532,7 @@ def main() -> None:
     total_wall_time: float = 0.0
     total_generation_window_s: float = 0.0
     overall_completion_tokens: int = 0
+    overall_slows: int = 0
 
     for r in range(1, num_rounds + 1):
         print(f"Round {r}/{num_rounds}:")
@@ -521,13 +544,15 @@ def main() -> None:
             vary_prompt=vary_prompt,
             streaming=streaming,
             start_index=overall_requests,
+            slow_threshold=slow_threshold,
         )
         total_wall_time += round_wall_s
         round_gen_s = compute_generation_window_s(results)
         total_generation_window_s += round_gen_s
-        summary = summarize_latencies(results)
+        summary = summarize_latencies(results, slow_counts_as_error=slow_counts_as_error)
         overall_requests += summary["count"]
         overall_errors += summary["errors"]
+        overall_slows += summary.get("slows", 0)
         overall_latencies.extend([res.latency_s for res in results if res.error is None])
         if streaming:
             overall_ttfbs.extend([res.ttfb_s for res in results if res.error is None and res.ttfb_s > 0])
@@ -541,7 +566,7 @@ def main() -> None:
             print(
                 f"  TTFB avg={summary['avg_ttfb_s']}s p50={summary['p50_ttfb_s']}s p95={summary['p95_ttfb_s']}s p99={summary['p99_ttfb_s']}s min={summary['min_ttfb_s']}s max={summary['max_ttfb_s']}s"
             )
-        print(f"  Errors={summary['errors']}  Round wall={round(round_wall_s, 3)}s  Gen window={round(round_gen_s, 3)}s  Throughput={tput} req/s")
+        print(f"  Errors={summary['errors']}  Slows={summary['slows']}  Round wall={round(round_wall_s, 3)}s  Gen window={round(round_gen_s, 3)}s  Throughput={tput} req/s")
 
         # Tokens/sec (generation throughput): sum of completion tokens divided by round wall time
         round_completion_tokens = sum(r.completion_tokens for r in results)
@@ -589,7 +614,7 @@ def main() -> None:
                 f"  TTFB avg={overall_avg_ttfb}s p50={overall_p50_ttfb}s p95={overall_p95_ttfb}s p99={overall_p99_ttfb}s min={overall_min_ttfb}s max={overall_max_ttfb}s"
             )
         print(
-            f"  Errors={overall_errors}  Total wall={round(total_wall_time, 3)}s  Gen window total={round(total_generation_window_s, 3)}s  Throughput={overall_tput} req/s"
+            f"  Errors={overall_errors}  Slows={overall_slows}  Total wall={round(total_wall_time, 3)}s  Gen window total={round(total_generation_window_s, 3)}s  Throughput={overall_tput} req/s"
         )
         overall_tok_tput = round(overall_completion_tokens / total_generation_window_s, 2) if total_generation_window_s > 0 else 0.0
         print(f"  Tokens: completion={overall_completion_tokens}  Gen throughput={overall_tok_tput} tok/s")
